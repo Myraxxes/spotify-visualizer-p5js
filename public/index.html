@@ -7,16 +7,235 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.min.js"></script>
   <script src="sketch.js" defer></script>
   <style>
+
     body {
       margin: 0;
-      background: black;
+      font-family: Arial, sans-serif;
+      background-color: #111;
+      color: #eee;
+      display: flex;
+      height: 100vh;
       overflow: hidden;
     }
-    canvas {
-      display: block;
+
+    /* Left-side container: song info */
+    #left-panel {
+      width: 400px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      background-color: #1a1a1a;
+      box-sizing: border-box;
+      overflow-y: auto;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 2rem;
+      font-weight: 700;
+      user-select: none;
+    }
+
+    /* Search container */
+    #search-container {
+      display: flex;
+      gap: 10px;
+    }
+    #search-input {
+      flex-grow: 1;
+      padding: 8px 12px;
+      font-size: 1rem;
+      border: none;
+      border-radius: 4px;
+      outline: none;
+    }
+    #search-button {
+      padding: 8px 16px;
+      font-size: 1rem;
+      cursor: pointer;
+      background-color: #f48fb1;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      transition: background-color 0.3s ease;
+    }
+    #search-button:hover {
+      background-color: #ec407a;
+    }
+
+    /* Matches container */
+    #matches-container {
+      margin-top: 10px;
+      max-height: 120px;
+      overflow-y: auto;
+      background-color: #222;
+      padding: 10px;
+      border-radius: 6px;
+    }
+    .match-item {
+      padding: 6px;
+      cursor: pointer;
+      border-radius: 4px;
+      user-select: none;
+      transition: background-color 0.2s ease;
+    }
+    .match-item:hover, .match-item.selected {
+      background-color: #333;
+    }
+
+    /* Song details */
+    #song-details {
+      display: flex;
+      gap: 15px;
+      align-items: flex-start;
+    }
+    #cover-image {
+      width: 120px;
+      height: 120px;
+      background-color: #333;
+      border-radius: 6px;
+      object-fit: cover;
+      user-select: none;
+      flex-shrink: 0;
+    }
+    #song-info {
+      flex-grow: 1;
+      font-size: 0.9rem;
+    }
+    #song-info h2 {
+      margin: 0 0 6px 0;
+      font-size: 1.2rem;
+    }
+    #song-info p {
+      margin: 4px 0;
+    }
+
+    /* Definitions box */
+    #definitions {
+      margin-top: 20px;
+      background-color: #222;
+      border-radius: 6px;
+      padding: 10px;
+      font-size: 0.85rem;
+      color: #bbb;
+      margin-left: -135px;
+    }
+
+    /* Right side container: p5.js canvas */
+    #right-panel {
+      flex-grow: 1;
+      background-color: #111;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      box-sizing: border-box;
+      position: relative;
+    }
+
+    /* Canvas container */
+    #canvas-wrapper {
+      position: relative;
+      width: 500px;
+      height: 500px;
+      border: 1px solid #444;
+      border-radius: 8px;
+      background-color: #000;
+    }
+
+     /* Arrows */
+    .arrow {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 2rem;
+      color: #cdcdcd;
+      background-color: rgba(20, 20, 20, 0.7);
+      width: 40px;
+      height: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      user-select: none;
+      border-radius: 6px;
+      transition: background-color 0.3s ease;
+    }
+    .arrow:hover {
+      background-color: #f48fb1;
+      color: white;
+    }
+    #arrow-left {
+      left: -50px;
+    }
+    #arrow-right {
+      right: -50px;
+    }
+
+    /* Dropdown for art styles */
+    #style-selector {
+      margin-top: 15px;
+      width: 200px;
+      padding: 6px 10px;
+      font-size: 1rem;
+      border-radius: 6px;
+      border: none;
+      outline: none;
+      cursor: pointer;
+      background-color: #222;
+      color: #eee;
     }
   </style>
 </head>
 <body>
+    <div id="left-panel">
+        <h1>Spotify Art Visualizer</h1>
+        <div id="description">
+            Visualize Spotify song features with dynamic p5.js art!
+        </div>
+
+        <div id="search-container">
+            <input type="text" id="search-input" placeholder="Search for a song" />
+            <button id="search-button">Search</button>
+        </div>
+
+        <div id="matches-container" hidden>
+            <!-- List of song matches or error message... -->
+        </div>
+
+        <div id="song-details" hidden>
+            <img id="cover-image" src="" alt="Album cover" />
+            <div id="song-info">
+                <h2 id="song-title">Song Title</h2>
+                <p id="artist-name">Artist Name</p>
+                <div id="song-features">
+                    <p><strong>Valence:</strong> <span id="valence">--</span></p>
+                    <p><strong>Tempo:</strong> <span id="tempo">--</span> BPM</p>
+                    <p><strong>Energy:</strong> <span id="energy">--</span></p>
+                </div>
+
+                <div id="definitions" >
+                    <p><strong>Valence:</strong> Musical positivity, 0-1. Low = sad/negative mood (cooler blue colors), high = happy/bright feeling (warmer orange colors).</p>
+                    <p><strong>Tempo:</strong> Beats per minute. Higher tempo shows faster animations.</p>
+                    <p><strong>Energy:</strong> Song intensity, 0-1. Higher means more energetic.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="right-panel">
+        <div id="canvas-wrapper">
+            <div id="arrow-left" class="arrow">&#8592;</div>
+            <div id="arrow-right" class="arrow">&#8594;</div>
+            <!-- p5.js canvas will go inside here -->
+        </div>
+        <select id="style-selector">
+            <option value="style1">Style 1</option>
+            <option value="style2">Style 2</option>
+            <option value="style3">Style 3</option>
+        </select>
+    </div>
 </body>
 </html>
